@@ -1,352 +1,341 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Caméras Jetson Nano</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-        
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .cameras-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-        
-        .camera-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .camera-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-        }
-        
-        .camera-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .camera-title {
-            font-size: 1.3em;
-            font-weight: bold;
-        }
-        
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #4ade80;
-            animation: pulse 2s infinite;
-        }
-        
-        .status-indicator.inactive {
-            background: #ef4444;
-            animation: none;
-        }
-        
-        .toggle-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid white;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .toggle-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
-        }
-        
-        .toggle-btn:active {
-            transform: scale(0.95);
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .camera-view {
-            position: relative;
-            width: 100%;
-            padding-bottom: 75%; /* Ratio 4:3 */
-            background: #1a1a1a;
-        }
-        
-        .camera-view.inactive {
-            background: #2a2a2a;
-        }
-        
-        .camera-view img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        
-        .camera-view img.hidden {
-            display: none;
-        }
-        
-        .camera-offline {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #888;
-            font-size: 1.5em;
-            text-align: center;
-        }
-        
-        .camera-offline-icon {
-            font-size: 3em;
-            margin-bottom: 10px;
-        }
-        
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 1.2em;
-        }
-        
-        .fullscreen-btn {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background 0.3s ease;
-        }
-        
-        .fullscreen-btn:hover {
-            background: rgba(0,0,0,0.9);
-        }
-        
-        .no-cameras {
-            text-align: center;
-            color: white;
-            font-size: 1.5em;
-            margin-top: 50px;
-            padding: 40px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-        }
-        
-        .refresh-btn {
-            background: #4ade80;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 1.1em;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: background 0.3s ease;
-        }
-        
-        .refresh-btn:hover {
-            background: #22c55e;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Surveillance Multi-Caméras — Nemo Engineering</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:var(--font-body);
+    background:#EEEFF4;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  [data-lucide]{width:1em;height:1em;stroke-width:1.6}
+
+  /* ---------- Top app bar (signature navy) ---------- */
+  .appbar{
+    position:sticky;top:0;z-index:30;
+    background:var(--bleu-3);
+    color:#fff;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    overflow:hidden;
+  }
+  .appbar .mesh{
+    position:absolute;right:-60px;top:50%;transform:translateY(-50%);
+    width:280px;height:280px;opacity:.10;pointer-events:none;
+  }
+  .appbar-inner{
+    max-width:1480px;margin:0 auto;padding:0 32px;height:62px;
+    display:flex;align-items:center;justify-content:space-between;position:relative;
+  }
+  .brand{display:flex;align-items:center;gap:16px}
+  .brand .wm{font-family:var(--font-logo);font-weight:400;text-transform:uppercase;
+    letter-spacing:.16em;font-size:21px;color:#fff;line-height:1}
+  .brand .div{width:1px;height:24px;background:rgba(255,255,255,.18)}
+  .brand .app{
+    font-family:var(--font-head);font-weight:400;text-transform:uppercase;
+    letter-spacing:.20em;font-size:12px;color:rgba(255,255,255,.82);
+  }
+  .sys{display:flex;align-items:center;gap:26px}
+  .sys-item{display:flex;align-items:center;gap:8px;
+    font-family:var(--font-mono);font-size:12px;color:rgba(255,255,255,.70);
+    letter-spacing:.01em;white-space:nowrap;}
+  .sys-item b{color:#fff;font-weight:500}
+  .sys-dot{width:7px;height:7px;border-radius:50%;background:#34D399;
+    box-shadow:0 0 0 0 rgba(52,211,153,.6);animation:beat 2.4s infinite;}
+  .sys-dot.off{background:var(--ink-3);animation:none;box-shadow:none}
+  @keyframes beat{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{box-shadow:0 0 0 5px rgba(52,211,153,0)}}
+
+  /* ---------- Page heading + control row ---------- */
+  .wrap{max-width:1480px;margin:0 auto;padding:34px 32px 64px}
+  .head-row{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:26px}
+  .eyebrow{font-family:var(--font-head);font-weight:500;text-transform:uppercase;
+    letter-spacing:.26em;font-size:11px;color:var(--bleu-1);margin-bottom:10px}
+  .page-title{font-family:var(--font-head);font-weight:100;text-transform:uppercase;
+    letter-spacing:.07em;font-size:34px;line-height:1.05;color:var(--bleu-3)}
+  .summary{display:flex;align-items:stretch;gap:0;
+    border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:#fff;box-shadow:var(--sh-1)}
+  .stat{padding:12px 22px;display:flex;flex-direction:column;gap:3px;min-width:96px}
+  .stat + .stat{border-left:1px solid var(--line)}
+  .stat .k{font-family:var(--font-head);text-transform:uppercase;letter-spacing:.14em;
+    font-size:10px;color:var(--ink-3)}
+  .stat .v{font-family:var(--font-mono);font-size:21px;color:var(--bleu-3);font-weight:500;line-height:1}
+  .stat .v small{font-size:12px;color:var(--ink-3);font-weight:400}
+  .stat .v.live{color:#0F9D58}
+
+  .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+  .btn{font-family:var(--font-head);text-transform:uppercase;letter-spacing:.12em;
+    font-weight:500;font-size:11px;cursor:pointer;border:1.5px solid transparent;
+    border-radius:var(--r-sm);transition:all .18s ease;display:inline-flex;align-items:center;gap:8px;
+    padding:10px 18px;line-height:1;background:var(--bleu-1);color:#fff}
+  .btn [data-lucide]{font-size:15px}
+  .btn:hover{background:var(--bleu-1-tint)}
+  .btn.outline{background:transparent;color:var(--bleu-1);border-color:var(--line-strong)}
+  .btn.outline:hover{background:var(--bleu-1-soft);border-color:var(--bleu-1)}
+  .toolbar .spacer{flex:1}
+  .filter{display:flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:#fff}
+  .filter button{font-family:var(--font-head);text-transform:uppercase;letter-spacing:.1em;
+    font-size:11px;font-weight:500;padding:9px 16px;background:#fff;border:0;color:var(--ink-2);cursor:pointer}
+  .filter button + button{border-left:1px solid var(--line)}
+  .filter button.on{background:var(--bleu-3);color:#fff}
+
+  /* ---------- Camera grid ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:22px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;
+    box-shadow:var(--sh-2);transition:box-shadow .25s ease,transform .25s ease}
+  .card:hover{box-shadow:var(--sh-3);transform:translateY(-2px)}
+
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;
+    border-bottom:1px solid var(--line)}
+  .cam-id{display:flex;align-items:center;gap:11px}
+  .cam-id .ic{width:32px;height:32px;border-radius:var(--r-sm);background:var(--bleu-3-soft);
+    color:var(--bleu-3);display:flex;align-items:center;justify-content:center;font-size:16px}
+  .cam-id .meta{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .cam-id .name{font-family:var(--font-head);text-transform:uppercase;letter-spacing:.1em;
+    font-size:13px;font-weight:500;color:var(--bleu-3);white-space:nowrap}
+  .cam-id .dev{font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
+  .head-right{display:flex;align-items:center;gap:12px}
+
+  .pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-head);
+    text-transform:uppercase;letter-spacing:.14em;font-size:10px;font-weight:500;
+    padding:5px 11px;border-radius:var(--r-pill)}
+  .pill.live{background:rgba(15,157,88,.10);color:#0F9D58}
+  .pill.off{background:var(--surface-2);color:var(--ink-3)}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .pill.live .dot{animation:blink 1.6s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+  .icon-btn{width:34px;height:34px;border-radius:var(--r-sm);border:1.5px solid var(--line-strong);
+    background:#fff;color:var(--bleu-3);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:16px;transition:all .16s ease}
+  .icon-btn:hover{background:var(--bleu-1-soft);border-color:var(--bleu-1);color:var(--bleu-1)}
+  .icon-btn.stop{border-color:transparent;background:var(--bleu-1);color:#fff}
+  .icon-btn.stop:hover{background:var(--bleu-1-tint)}
+
+  /* ---------- Camera view (live mock) ---------- */
+  .view{position:relative;width:100%;padding-bottom:62%;background:#0B0B14;overflow:hidden}
+  .feed{position:absolute;inset:0;background:
+      radial-gradient(120% 90% at 50% 18%, #243049 0%, #141826 55%, #0B0B14 100%);}
+  .feed::after{content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(180deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px);
+    mix-blend-mode:overlay;animation:scan 7s linear infinite}
+  @keyframes scan{from{background-position-y:0}to{background-position-y:120px}}
+  .scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,.07)}
+  .scene [data-lucide]{font-size:120px;stroke-width:1}
+
+  /* HUD overlays */
+  .hud{position:absolute;inset:0;pointer-events:none;font-family:var(--font-mono);color:#fff}
+  .hud .tl{position:absolute;top:11px;left:13px;display:flex;align-items:center;gap:8px;
+    font-size:11px;letter-spacing:.06em;background:rgba(11,11,20,.55);padding:5px 9px;border-radius:var(--r-xs)}
+  .hud .rec{width:8px;height:8px;border-radius:50%;background:#FF4D4D;animation:blink 1.4s infinite}
+  .hud .tr{position:absolute;top:11px;right:13px;font-size:11px;color:rgba(255,255,255,.72);
+    background:rgba(11,11,20,.55);padding:5px 9px;border-radius:var(--r-xs)}
+  .hud .bl{position:absolute;bottom:11px;left:13px;font-size:11px;color:rgba(255,255,255,.78);
+    background:rgba(11,11,20,.55);padding:5px 9px;border-radius:var(--r-xs);letter-spacing:.04em}
+
+  .fs-btn{position:absolute;bottom:11px;right:11px;width:36px;height:36px;border-radius:var(--r-sm);
+    border:1px solid rgba(255,255,255,.2);background:rgba(11,11,20,.55);color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .16s ease;
+    backdrop-filter:blur(2px)}
+  .fs-btn:hover{background:rgba(11,11,20,.85)}
+
+  /* inactive state */
+  .view.inactive .feed,.view.inactive .feed::after,.view.inactive .hud .tl,
+  .view.inactive .hud .tr,.view.inactive .hud .bl{display:none}
+  .view.inactive{background:#15161E}
+  .offline{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;gap:12px;color:rgba(255,255,255,.45)}
+  .view.inactive .offline{display:flex}
+  .view.inactive .scene{display:none}
+  .offline [data-lucide]{font-size:46px;stroke-width:1.2}
+  .offline span{font-family:var(--font-head);text-transform:uppercase;letter-spacing:.18em;font-size:12px}
+
+  /* card footer (telemetry) */
+  .card-foot{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;
+    border-top:1px solid var(--line);font-family:var(--font-mono);font-size:11px;color:var(--ink-2)}
+  .card-foot .grp{display:flex;gap:18px}
+  .card-foot .grp span b{color:var(--bleu-3);font-weight:500}
+  .card-foot .grp .lbl{color:var(--ink-3)}
+
+  /* empty state */
+  .empty{text-align:center;padding:80px 30px;background:#fff;border:1px solid var(--line);
+    border-radius:var(--r-lg);box-shadow:var(--sh-1)}
+  .empty [data-lucide]{font-size:48px;color:var(--ink-3);stroke-width:1.2}
+  .empty p{font-family:var(--font-head);text-transform:uppercase;letter-spacing:.14em;
+    font-size:14px;color:var(--bleu-3);margin:18px 0 22px}
+
+  @media(max-width:560px){
+    .grid{grid-template-columns:1fr}
+    .appbar-inner{padding:0 18px}
+    .sys-item:not(.keep){display:none}
+    .head-row{flex-direction:column;align-items:flex-start}
+    .wrap{padding:24px 18px 48px}
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎥 Multi-Caméras Jetson Nano</h1>
-            <p class="subtitle">Visualisation en temps réel</p>
-        </header>
-        
-        <div id="cameras-container" class="cameras-grid"></div>
-        
-        <div id="no-cameras" class="no-cameras" style="display: none;">
-            <p>Aucune caméra détectée</p>
-            <button class="refresh-btn" onclick="location.reload()">🔄 Actualiser</button>
-        </div>
+  <!-- ============ APP BAR ============ -->
+  <header class="appbar">
+    <img class="mesh" src="nemo-picto-white.svg" alt="">
+    <div class="appbar-inner">
+      <div class="brand">
+        <span class="wm">Nemo</span>
+        <div class="div"></div>
+        <span class="app">Surveillance Caméras</span>
+      </div>
+      <div class="sys">
+        <div class="sys-item"><span class="sys-dot"></span>Broker MQTT&nbsp;<b>connecté</b></div>
+        <div class="sys-item">Hôte&nbsp;<b>jetson-nano</b></div>
+        <div class="sys-item keep" id="clock"><b>--:--:--</b></div>
+      </div>
     </div>
-    
-    <script>
-        async function loadCameras() {
-            try {
-                const response = await fetch('/api/cameras');
-                const data = await response.json();
-                const cameras = data.cameras;
-                
-                const container = document.getElementById('cameras-container');
-                const noCameras = document.getElementById('no-cameras');
-                
-                if (cameras.length === 0) {
-                    container.style.display = 'none';
-                    noCameras.style.display = 'block';
-                    return;
-                }
-                
-                cameras.forEach(cameraId => {
-                    const card = createCameraCard(cameraId);
-                    container.appendChild(card);
-                });
-                
-            } catch (error) {
-                console.error('Erreur lors du chargement des caméras:', error);
-                document.getElementById('no-cameras').style.display = 'block';
-            }
-        }
-        
-        function createCameraCard(cameraId) {
-            const card = document.createElement('div');
-            card.className = 'camera-card';
-            
-            card.innerHTML = `
-                <div class="camera-header">
-                    <span class="camera-title">Caméra ${cameraId}</span>
-                    <div class="header-controls">
-                        <button class="toggle-btn" onclick="toggleCamera(${cameraId}, this)">
-                            <span class="toggle-icon">⏸</span>
-                            <span class="toggle-text">Arrêter</span>
-                        </button>
-                        <div class="status-indicator" id="status-${cameraId}"></div>
-                    </div>
-                </div>
-                <div class="camera-view" id="view-${cameraId}">
-                    <img src="/video_feed/${cameraId}" alt="Caméra ${cameraId}" id="img-${cameraId}">
-                    <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶ Plein écran</button>
-                </div>
-            `;
-            
-            return card;
-        }
-        
-        async function toggleCamera(cameraId, btn) {
-            try {
-                const response = await fetch(`/camera/${cameraId}/toggle`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                const statusIndicator = document.getElementById(`status-${cameraId}`);
-                const img = document.getElementById(`img-${cameraId}`);
-                const view = document.getElementById(`view-${cameraId}`);
-                const icon = btn.querySelector('.toggle-icon');
-                const text = btn.querySelector('.toggle-text');
-                
-                if (data.is_running) {
-                    // Caméra activée
-                    statusIndicator.classList.remove('inactive');
-                    img.classList.remove('hidden');
-                    view.classList.remove('inactive');
-                    
-                    // Supprimer le message offline s'il existe
-                    const offlineMsg = view.querySelector('.camera-offline');
-                    if (offlineMsg) offlineMsg.remove();
-                    
-                    // Recharger le flux
-                    img.src = `/video_feed/${cameraId}?t=${Date.now()}`;
-                    
-                    icon.textContent = '⏸';
-                    text.textContent = 'Arrêter';
-                } else {
-                    // Caméra désactivée
-                    statusIndicator.classList.add('inactive');
-                    img.classList.add('hidden');
-                    view.classList.add('inactive');
-                    
-                    // Ajouter le message offline
-                    const offlineMsg = document.createElement('div');
-                    offlineMsg.className = 'camera-offline';
-                    offlineMsg.innerHTML = `
-                        <div class="camera-offline-icon">📷</div>
-                        <div>Caméra désactivée</div>
-                    `;
-                    view.appendChild(offlineMsg);
-                    
-                    icon.textContent = '▶';
-                    text.textContent = 'Démarrer';
-                }
-                
-            } catch (error) {
-                console.error('Erreur lors du basculement de la caméra:', error);
-                alert('Erreur lors de la connexion à la caméra');
-            }
-        }
-        
-        function toggleFullscreen(btn) {
-            const img = btn.parentElement.querySelector('img');
-            if (!document.fullscreenElement) {
-                img.requestFullscreen().catch(err => {
-                    console.error('Erreur plein écran:', err);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        }
-        
-        // Chargement initial
-        loadCameras();
-    </script>
+  </header>
+
+  <div class="wrap">
+    <!-- ============ HEADING ============ -->
+    <div class="head-row">
+      <div>
+        <div class="eyebrow">Poste de visualisation · Temps réel</div>
+        <h1 class="page-title">Multi-Caméras</h1>
+      </div>
+      <div class="summary">
+        <div class="stat"><span class="k">Détectées</span><span class="v">4</span></div>
+        <div class="stat"><span class="k">Actives</span><span class="v live">3</span></div>
+        <div class="stat"><span class="k">Débit</span><span class="v">28<small>&nbsp;fps</small></span></div>
+        <div class="stat"><span class="k">Disponibilité</span><span class="v">99.4<small>&nbsp;%</small></span></div>
+      </div>
+    </div>
+
+    <!-- ============ TOOLBAR ============ -->
+    <div class="toolbar">
+      <div class="filter">
+        <button class="on">Toutes</button>
+        <button>Actives</button>
+        <button>Arrêtées</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn outline"><i data-lucide="layout-grid"></i>Disposition</button>
+      <button class="btn" onclick="location.reload()"><i data-lucide="refresh-cw"></i>Actualiser</button>
+    </div>
+
+    <!-- ============ CAMERA GRID ============ -->
+    <div id="cameras-container" class="grid"></div>
+  </div>
+
+  <script>
+    /* Mock camera registry — mirrors /api/cameras + per-camera state.
+       In production this is fed by fetch('/api/cameras') and the
+       /camera/<id>/toggle + /video_feed/<id> endpoints. */
+    const CAMERAS = [
+      { id: 0, name: 'Caméra 0', zone: 'Entrée atelier',  running: true,  res: '640×480', fps: 30, up: '04:12:38' },
+      { id: 1, name: 'Caméra 1', zone: 'Banc d\u2019essai', running: true,  res: '640×480', fps: 28, up: '04:12:31' },
+      { id: 2, name: 'Caméra 2', zone: 'Zone CND',         running: true,  res: '640×480', fps: 25, up: '01:47:05' },
+      { id: 3, name: 'Caméra 3', zone: 'Magasin',          running: false, res: '640×480', fps: 0,  up: '—' },
+    ];
+
+    function cardHTML(c){
+      const dev = `/dev/video${c.id}`;
+      const live = c.running;
+      return `
+      <div class="card" data-cam="${c.id}">
+        <div class="card-head">
+          <div class="cam-id">
+            <div class="ic"><i data-lucide="cctv"></i></div>
+            <div class="meta">
+              <span class="name">${c.zone}</span>
+              <span class="dev">Caméra ${c.id} · ${dev}</span>
+            </div>
+          </div>
+          <div class="head-right">
+            <span class="pill ${live?'live':'off'}" id="pill-${c.id}">
+              <span class="dot"></span>${live?'En direct':'Arrêtée'}
+            </span>
+            <button class="icon-btn ${live?'stop':''}" id="tg-${c.id}" title="${live?'Arrêter':'Démarrer'}"
+              onclick="toggleCamera(${c.id}, this)">
+              <i data-lucide="${live?'pause':'play'}"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="view ${live?'':'inactive'}" id="view-${c.id}">
+          <div class="feed"></div>
+          <div class="scene"><i data-lucide="cctv"></i></div>
+          <div class="hud">
+            <div class="tl"><span class="rec"></span>REC</div>
+            <div class="tr">CAM ${String(c.id).padStart(2,'0')}</div>
+            <div class="bl" id="ts-${c.id}">--/--/---- --:--:--</div>
+          </div>
+          <div class="offline">
+            <i data-lucide="video-off"></i>
+            <span>Caméra désactivée</span>
+          </div>
+          <button class="fs-btn" title="Plein écran" onclick="toggleFullscreen(this)">
+            <i data-lucide="maximize-2"></i>
+          </button>
+        </div>
+
+        <div class="card-foot">
+          <div class="grp">
+            <span><span class="lbl">RÉS</span> <b>${c.res}</b></span>
+            <span><span class="lbl">FPS</span> <b id="fps-${c.id}">${c.fps}</b></span>
+          </div>
+          <div class="grp">
+            <span><span class="lbl">DURÉE</span> <b id="up-${c.id}">${c.up}</b></span>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function render(){
+      document.getElementById('cameras-container').innerHTML = CAMERAS.map(cardHTML).join('');
+      lucide.createIcons();
+    }
+
+    /* Mirrors POST /camera/<id>/toggle behaviour */
+    function toggleCamera(id, btn){
+      const cam = CAMERAS.find(c=>c.id===id);
+      cam.running = !cam.running;
+      const view = document.getElementById(`view-${id}`);
+      const pill = document.getElementById(`pill-${id}`);
+      const fps  = document.getElementById(`fps-${id}`);
+      const up   = document.getElementById(`up-${id}`);
+      if(cam.running){
+        view.classList.remove('inactive');
+        pill.className='pill live'; pill.innerHTML='<span class="dot"></span>En direct';
+        btn.classList.add('stop'); btn.title='Arrêter'; btn.innerHTML='<i data-lucide="pause"></i>';
+        fps.textContent=cam.fps=28; up.textContent='00:00:02';
+      } else {
+        view.classList.add('inactive');
+        pill.className='pill off'; pill.innerHTML='<span class="dot"></span>Arrêtée';
+        btn.classList.remove('stop'); btn.title='Démarrer'; btn.innerHTML='<i data-lucide="play"></i>';
+        fps.textContent=cam.fps=0; up.textContent='—';
+      }
+      lucide.createIcons();
+    }
+
+    function toggleFullscreen(btn){
+      const view = btn.closest('.view');
+      if(!document.fullscreenElement){ view.requestFullscreen?.().catch(()=>{}); }
+      else { document.exitFullscreen(); }
+    }
+
+    function tick(){
+      const now = new Date();
+      const pad=n=>String(n).padStart(2,'0');
+      const t=`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const stamp=`${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${t}`;
+      document.querySelector('#clock b').textContent=t;
+      CAMERAS.forEach(c=>{ if(c.running){ const el=document.getElementById(`ts-${c.id}`); if(el) el.textContent=stamp; }});
+    }
+
+    render();
+    tick(); setInterval(tick,1000);
+  </script>
 </body>
 </html>
